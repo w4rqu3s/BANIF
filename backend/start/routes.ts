@@ -5,7 +5,7 @@ import { middleware } from './kernel.js'
 import AuthController from '#controllers/auth_controller'
 
 router.group(() => {
-  router.post('/register', [AuthController, 'register']).use(middleware.auth())
+  router.post('/register', [AuthController, 'register']) //.use(middleware.auth())
   router.post('/login', [AuthController, 'login'])
   router.post('/logout', [AuthController, 'logout']).use(middleware.auth())
 })

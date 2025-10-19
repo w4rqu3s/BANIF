@@ -5,9 +5,9 @@ export default class AuthController {
   
    async register({ request, response, auth }: HttpContext) {
 
-    if (auth.user?.role !== 'manager') {
-      return response.unauthorized({ message: 'Acesso negado' })
-    }
+    // if (auth.user?.role !== 'manager') {
+    //   return response.unauthorized({ message: 'Acesso negado' })
+    // }
 
     try {
       const data = request.only(['name', 'email', 'password', 'cpf', 'adress', 'role'])

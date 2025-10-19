@@ -62,17 +62,16 @@ export default class TransactionsController {
     const { toAccountId, amount } = request.only([ 'toAccountId', 'amount' ])
 
     const user = auth.user!
-    const fromAccountId = await Account.findBy('user_id', user.id)
+    const from = await Account.findBy('user_id', user.id)
 
-    if (!fromAccountId) return response.notFound({message: 'Conta não encontrada'})
+    if (!from) return response.notFound({message: 'Conta não encontrada'})
 
-    if (fromAccountId.id === toAccountId)
+    if (from.id === toAccountId)
       return response.badRequest({ message: 'Contas devem ser diferentes' })
-
-    const from = await Account.find(fromAccountId)
+    
     const to = await Account.find(toAccountId)
 
-    if (!from || !to) return response.notFound({ message: 'Conta de origem ou destino inválida' })
+    if (!to) return response.notFound({ message: 'Conta destino inválida' })
 
     from.balance = parseFloat(from.balance as unknown as string)
     to.balance = parseFloat(to.balance as unknown as string)

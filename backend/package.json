@@ -58,6 +58,7 @@
     "@vinejs/vine": "^3.0.1",
     "luxon": "^3.7.2",
     "mysql2": "^3.15.2",
+    "node-fetch": "^3.3.2",
     "reflect-metadata": "^0.2.2"
   },
   "hotHook": {
