@@ -40,21 +40,8 @@ router
 })
 .prefix('/investments')
 
-
-
-
-
-
-
-router.get('/me', async ({ auth }) => {
-  await auth.check()
-  return auth.user
-}).use(middleware.auth())
-
-
 router.get('/', async () => {
   return {
     hello: 'world',
   }
-
 })
