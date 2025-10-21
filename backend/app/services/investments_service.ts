@@ -2,6 +2,7 @@ import Investment from '#models/investment'
 import Account from '#models/account'
 import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
+import Transaction from '#models/transaction'
 
 export default class InvestmentService {
 
@@ -21,6 +22,16 @@ export default class InvestmentService {
       account.balance = parseFloat(account.balance as unknown as string)
       account.balance -= Number(amount)
       await account.save()
+
+      const transaction = new Transaction()
+      transaction.useTransaction(trx)
+      transaction.merge({
+        accountId: account.id,
+        type: 'investment_applied',
+        amount,
+        description: `investimento`,
+      })
+      await transaction.save()
 
       const investment = new Investment()
       investment.useTransaction(trx)

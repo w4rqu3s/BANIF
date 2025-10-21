@@ -12,7 +12,7 @@ export default class extends BaseSchema {
         .references('id')
         .inTable('accounts')
         .onDelete('CASCADE')
-      table.enum('type', ['deposit', 'withdraw', 'transfer_in', 'transfer_out']).notNullable()
+      table.enum('type', ['deposit', 'withdraw', 'transfer_in', 'transfer_out', 'investment_applied']).notNullable()
       table.decimal('amount', 12, 2).notNullable()
       table.string('description')
       table.timestamps(true)

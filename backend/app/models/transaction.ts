@@ -11,7 +11,7 @@ export default class Transaction extends BaseModel {
   declare accountId: number
 
   @column()
-  declare type: 'deposit' | 'withdraw' | 'transfer_in' | 'transfer_out'
+  declare type: 'deposit' | 'withdraw' | 'transfer_in' | 'transfer_out' | 'investment_applied'
 
   @column()
   declare amount: number
