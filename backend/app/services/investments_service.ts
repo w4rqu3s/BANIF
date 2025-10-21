@@ -65,6 +65,18 @@ export default class InvestmentService {
 
       account.balance = parseFloat(account.balance as unknown as string)
       account.balance += totalResgate
+      investment.amount = totalResgate
+
+      const transaction = new Transaction()
+      transaction.useTransaction(trx)
+      transaction.merge({
+        accountId: account.id,
+        type: 'investment_redeemed',
+        amount: totalResgate,
+        description: `investimento`,
+      })
+      await transaction.save()
+
       investment.merge({
         status: 'redeemed',
         redeemedAt: DateTime.local()

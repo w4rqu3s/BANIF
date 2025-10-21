@@ -1,4 +1,5 @@
 import User from '#models/user'
+import AccountService from './accounts_service.js'
 
 export default class UserService {
   /** Criação de usuário */
@@ -11,6 +12,7 @@ export default class UserService {
     role: 'client' | 'manager'
   }) {
     const user = await User.create(data)
+    await AccountService.create(user.id)
     return user
   }
 

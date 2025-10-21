@@ -36,9 +36,9 @@ export default class AccountService {
     if (!account) throw new Error('Conta não encontrada')
 
     const history = await db
-      .from('account_history')
+      .from('transactions')
       .where('account_id', account.id)
-      .orderBy('date', 'desc')
+      .orderBy('created_at', 'desc')
 
     return { account, history }
   }

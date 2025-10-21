@@ -8,8 +8,8 @@ import InvestmentSeeder from './investment_seeder.js'
 export default class DatabaseSeeder extends BaseSeeder {
   public async run() {
     await new UserSeeder(this.client).run()
-    await new AccountSeeder(this.client).run()
-    await new TransactionSeeder(this.client).run()
-    await new InvestmentSeeder(this.client).run()
+    // await new AccountSeeder(this.client).run()
+    // await new TransactionSeeder(this.client).run()
+    // await new InvestmentSeeder(this.client).run()
   }
 }
