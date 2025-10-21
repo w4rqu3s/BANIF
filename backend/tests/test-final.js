@@ -1,4 +1,3 @@
-// test-banif.js
 import fetch from 'node-fetch'
 
 const API = 'http://localhost:3333'
@@ -6,11 +5,14 @@ const API = 'http://localhost:3333'
 // ---------------------
 // 🔐 AUTH
 // ---------------------
-async function register(name, email, password, cpf, adress, role) {
+async function register(name, email, password, cpf, adress, role, token) {
   const res = await fetch(`${API}/auth/register`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, password, cpf, adress, role }),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({name, email, password, cpf, adress, role}),
   })
   return res.json()
 }
@@ -73,14 +75,14 @@ async function withdraw(clientToken, amount) {
   return res.json()
 }
 
-async function transfer(clientToken, toAccountId, amount) {
+async function transfer(clientToken, accountNumber, amount) {
   const res = await fetch(`${API}/transactions/transfer`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${clientToken}`,
     },
-    body: JSON.stringify({ toAccountId, amount }),
+    body: JSON.stringify({ accountNumber, amount }),
   })
   return res.json()
 }
@@ -96,6 +98,18 @@ async function invest(clientToken, type, amount) {
       Authorization: `Bearer ${clientToken}`,
     },
     body: JSON.stringify({ type, amount }),
+  })
+  return res.json()
+}
+
+async function redeem(clientToken, investmentId) {
+    const res = await fetch(`${API}/investments/redeem`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${clientToken}`,
+    },
+    body: JSON.stringify({ investmentId }),
   })
   return res.json()
 }
@@ -116,15 +130,19 @@ async function getHistory(clientToken) {
 async function run() {
   console.log('\n🧠 BANIF - Teste de Fluxo Completo')
 
+  const gerenteprimario = await login('w4rqu3s@gmail.com', 'senhagenerica123')
+  const tokenprimario = gerenteprimario.token.token
+  console.log(tokenprimario)
+
   // 1️⃣ Registrar usuários
-  await register('Gerente', 'gerente@banif.com', '1234', '11111111111', 'teste', 'manager')
-  await register('Cliente 1', 'cliente1@banif.com', '1234', '22222222222', 'teste', 'client')
-  await register('Cliente 2', 'cliente2@banif.com', '1234', '33333333333', 'teste', 'client')
+  await register('Gerente', 'gerente@banif.com', '123456', '11111111111', 'teste', 'manager', tokenprimario)
+  await register('Cliente 1', 'cliente1@banif.com', '123456', '22222222222', 'teste', 'client', tokenprimario)
+  await register('Cliente 2', 'cliente2@banif.com', '123456', '33333333333', 'teste', 'client', tokenprimario)
 
   // 2️⃣ Login
-  const gerente = await login('gerente@banif.com', '1234')
-  const cliente1 = await login('cliente1@banif.com', '1234')
-  const cliente2 = await login('cliente2@banif.com', '1234')
+  const gerente = await login('gerente@banif.com', '123456')
+  const cliente1 = await login('cliente1@banif.com', '123456')
+  const cliente2 = await login('cliente2@banif.com', '123456')
 
   const tkGerente = gerente.token?.token || gerente.token
   const tkC1 = cliente1.token?.token || cliente1.token
@@ -134,8 +152,8 @@ async function run() {
 
   // 3️⃣ Gerente cria contas
   console.log('\n🏦 Criando contas...')
-  await createAccount(tkGerente, 2)
-  await createAccount(tkGerente, 3)
+  await createAccount(tkGerente, 6)
+  await createAccount(tkGerente, 7)
 
   const acc1 = await getMyAccount(tkC1)
   const acc2 = await getMyAccount(tkC2)
@@ -151,7 +169,7 @@ async function run() {
 
   // 5️⃣ Transferência
   console.log('\n💸 Transferindo de Cliente 1 → Cliente 2...')
-  console.log(await transfer(tkC1, acc2.id, 300))
+  console.log(await transfer(tkC1, acc2.accountNumber, 300))
 
   // 6️⃣ Saque
   console.log('\n🏧 Cliente 2 saca R$ 500...')
@@ -160,11 +178,14 @@ async function run() {
   // 7️⃣ Investimento
   console.log('\n📈 Cliente 1 investe R$ 200 em poupança...')
   await invest(tkC1, 'poupanca', 200)
+  await redeem(tkC1, 1)
 
   // 8️⃣ Extrato
   console.log('\n🧾 Consultando extrato do Cliente 1...')
   const hist1 = await getHistory(tkC1)
+  const hist2 = await getHistory(tkC2)
   console.log(hist1)
+  console.log(hist2)
 
   console.log('\n✅ Teste completo finalizado!')
 }

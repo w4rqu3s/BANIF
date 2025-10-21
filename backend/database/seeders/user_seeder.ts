@@ -7,7 +7,7 @@ export default class UserSeeder extends BaseSeeder {
       {
         name: 'Victor Pecine Marques',
         email: 'w4rqu3s@gmail.com',
-        password: 'senha',
+        password: 'senhagenerica123',
         cpf: '11369835973',
         adress: 'Paranaguá PR Justo Éris Almada Insfran 19',
         role: 'manager'
@@ -31,7 +31,7 @@ export default class UserSeeder extends BaseSeeder {
       {
         name: 'Hanae Rosa Terato Ramos',
         email: 'hanae.rosa09@gmail.com',
-        password: '12345',
+        password: '123456',
         cpf: '00000000000',
         adress: 'Paranguá PR Cominese 1909',
         role: 'manager'

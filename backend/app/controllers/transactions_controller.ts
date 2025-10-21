@@ -1,116 +1,48 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import db from '@adonisjs/lucid/services/db'
-
-import Transaction from '#models/transaction'
-import Account from '#models/account'
+import TransactionService from '#services/transactions_service'
+import TransactionValidator from '#validators/transaction_validator'
 
 export default class TransactionsController {
 
   async deposit({ auth, request, response }: HttpContext) {
 
-    const { amount } = request.only(['amount'])
+    try {
+      
+      const { amount } = await TransactionValidator.number(request)
+      
+      const saldo = await TransactionService.deposit(auth.user!.id, amount)
 
-    const user = auth.user!
-    const account = await Account.findBy('user_id', user.id)
-    
-    if (!account) return response.notFound({ message: 'Conta não encontrada' })
+      return response.ok({ message: 'Depósito efetuado com sucesso', saldo })
 
-    account.balance = parseFloat(account.balance as unknown as string)
-    account.balance += Number(amount)
-    
-    await account.save()
+    } catch (error) {
 
-    await Transaction.create({
-      accountId: account.id,
-      type: 'deposit',
-      amount,
-      description: 'Depósito realizado',
-    })
-
-    return response.ok({ message: 'Depósito efetuado com sucesso', saldo: account.balance })
+      return response.badRequest({ message: error.message })
+    }
   }
 
   async withdraw({ auth, request, response }: HttpContext) {
-
-    const { amount } = request.only(['amount'])
-
-    const user = auth.user!
-    const account = await Account.findBy('user_id', user.id)
-
-    if (!account) return response.notFound({ message: 'Conta não encontrada' })
-
-    account.balance = parseFloat(account.balance as unknown as string)
-
-    if (account.balance < amount)
-      return response.badRequest({ message: 'Saldo insuficiente' })
-
-    account.balance -= Number(amount)
-    await account.save()
-
-    await Transaction.create({
-      accountId: account.id,
-      type: 'withdraw',
-      amount,
-      description: 'Saque realizado',
-    })
-
-    return response.ok({ message: 'Saque efetuado com sucesso', saldo: account.balance })
+    try {
+      const { amount } = await TransactionValidator.number(request)
+      
+      const saldo = await TransactionService.withdraw(auth.user!.id, amount)
+      return response.ok({ message: 'Saque efetuado com sucesso', saldo })
+    } catch (error) {
+      return response.badRequest({ message: error.message })
+    }
   }
 
   async transfer({ auth, request, response }: HttpContext) {
+    try {
+      const { accountNumber, amount } = await TransactionValidator.transfer(request)
 
-    const { toAccountId, amount } = request.only([ 'toAccountId', 'amount' ])
+      await TransactionService.transfer(auth.user!.id, accountNumber, amount)
 
-    const user = auth.user!
-    const from = await Account.findBy('user_id', user.id)
+      return response.ok({ message: 'Transferência realizada com sucesso' })
 
-    if (!from) return response.notFound({message: 'Conta não encontrada'})
+    } catch (error) {
 
-    if (from.id === toAccountId)
-      return response.badRequest({ message: 'Contas devem ser diferentes' })
-    
-    const to = await Account.find(toAccountId)
+      return response.badRequest({ message: error.message })
 
-    if (!to) return response.notFound({ message: 'Conta destino inválida' })
-
-    from.balance = parseFloat(from.balance as unknown as string)
-    to.balance = parseFloat(to.balance as unknown as string)
-
-    if (from.balance < amount)
-      return response.badRequest({ message: 'Saldo insuficiente na conta de origem' })
-
-    await db.transaction(async (trx) => {
-      from.useTransaction(trx)
-      to.useTransaction(trx)
-
-      from.balance -= Number(amount)
-      to.balance += Number(amount)
-
-      await from.save()
-      await to.save()
-
-      const outTx = new Transaction()
-      outTx.useTransaction(trx)
-      outTx.merge({
-        accountId: from.id,
-        type: 'transfer_out',
-        amount,
-        description: `Transferência para conta ${to.accountNumber}`,
-      })
-      await outTx.save()
-
-      const inTx = new Transaction()
-      inTx.useTransaction(trx)
-      inTx.merge({
-        accountId: to.id,
-        type: 'transfer_in',
-        amount,
-        description: `Transferência recebida de conta ${from.accountNumber}`,
-      })
-      await inTx.save()
-    })
-
-
-    return response.ok({ message: 'Transferência realizada com sucesso' })
+    }
   }
 }

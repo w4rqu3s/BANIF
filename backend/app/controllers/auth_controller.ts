@@ -1,21 +1,20 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import User from '#models/user'
+import UserService from '#services/user_service'
+import { registerValidator, loginValidator } from '#validators/user_validator'
+import UserPolicy from '#policies/user_policy'
 
 export default class AuthController {
-  
-   async register({ request, response, auth }: HttpContext) {
-
-    // if (auth.user?.role !== 'manager') {
-    //   return response.unauthorized({ message: 'Acesso negado' })
-    // }
-
+  /** Registrar novo usuário */
+  async register({ request, response, auth }: HttpContext) {
     try {
-      const data = request.only(['name', 'email', 'password', 'cpf', 'adress', 'role'])
-      const user = await User.create(data)
+      await UserPolicy.onlyManagers(auth)
+
+      const payload = await request.validateUsing(registerValidator)
+      const user = await UserService.register(payload)
 
       return response.created({
         message: 'Usuário registrado com sucesso',
-        user
+        user,
       })
     } catch (error) {
       return response.badRequest({
@@ -25,49 +24,27 @@ export default class AuthController {
     }
   }
 
-
+  /** Login */
   async login({ request, response }: HttpContext) {
-
-    const { email, password } = request.only(['email', 'password'])
+    const payload = await request.validateUsing(loginValidator)
 
     try {
-        const user = await User.verifyCredentials(email, password)
-        const token = await User.accessTokens.create(user, ['*'], {
-        name: 'Login Token',
-        expiresIn: '30 days',
+      const result = await UserService.login(payload)
+      return response.ok(result)
+    } catch {
+      return response.unauthorized({
+        message: 'E-mail ou senha inválidos',
       })
-
-      return response.ok({
-        message: 'Login realizado com sucesso',
-        token,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-      })
-    } catch (e) {
-      return response.unauthorized({ message: 'E-mail ou senha inválidos - ' + e })
     }
   }
 
-   async logout({auth, response }: HttpContext) {
+  /** Logout */
+  async logout({ auth, response }: HttpContext) {
     try {
-      const user = auth.getUserOrFail()
-      const token = auth.user?.currentAccessToken
-
-      if (token) {
-        await User.accessTokens.delete(user, token.identifier)
-      }
-
-      return response.ok({
-        message: 'Logout realizado com sucesso',
-      })
-    } catch (error) {
-      return response.unauthorized({
-        message: 'Token inválido',
-      })
+      await UserService.logout(auth)
+      return response.ok({ message: 'Logout realizado com sucesso' })
+    } catch {
+      return response.unauthorized({ message: 'Token inválido' })
     }
   }
 }
